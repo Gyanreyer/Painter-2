@@ -14,7 +14,7 @@ const defaultShaderUniformValues = {
   simulationSpeed: 1.0
 };
 
-class RenderManager {
+export default class RenderManager {
   constructor() {
     // Initialize our PixiJS app
     this.pixiApp = new PIXI.Application({
@@ -32,6 +32,7 @@ class RenderManager {
       defaultShaderUniformValues
     );
 
+    this.pixelQueue = [];
     this.textures = [];
     this.currentRenderTargetIndex = 0;
     this.displaySprite = null;
@@ -51,9 +52,7 @@ class RenderManager {
 
       setTimeout(() => {
         if (this.isRunning)
-          this.completionCheckWorker.postMessage(
-            this.pixiApp.renderer.extract.pixels(this.pixiApp.stage)
-          );
+          this.completionCheckWorker.postMessage(this.getDisplayPixels());
       }, 1000);
     };
 
@@ -66,6 +65,10 @@ class RenderManager {
       { passive: true }
     );
   }
+
+  // Gets pixel data for the display sprite as a Uint8Array
+  getDisplayPixels = () =>
+    this.pixiApp.renderer.extract.pixels(this.displaySprite);
 
   // Renders to canvas each frame
   render = () => {
@@ -91,11 +94,62 @@ class RenderManager {
     this.currentRenderTargetIndex = 1 - this.currentRenderTargetIndex;
   };
 
-  start = (xPos, yPos) => {
-    // Stop if it's currently running so that we can reset things
-    if (this.hasStarted) {
-      this.reset();
+  addPixelToQueue = async pixelInfo => {
+    const shouldStartHandlingQueue =
+      this.pixelQueue.length === 0 && pixelInfo.length > 0;
+
+    this.pixelQueue = this.pixelQueue.concat(pixelInfo);
+
+    if (shouldStartHandlingQueue) {
+      this.handlePixelQueue();
     }
+  };
+
+  handlePixelQueue = async () => {
+    if (!this.hasStarted) this.initialize();
+
+    // this.isH
+    const shouldResume = this.isRunning;
+    if (shouldResume) this.pause();
+
+    const { width, height } = this.pixiApp.renderer;
+
+    // Get an array of all pixels in the current display texture
+    const textureBuffer = this.getDisplayPixels();
+
+    while (this.pixelQueue.length > 0) {
+      // for (let i = 0, numPixels = pixelsToChange.length; i < numPixels; i++) {
+      const currentPixel = this.pixelQueue.pop(); //pixelsToChange[i];
+      const arrayPos = (currentPixel.x + currentPixel.y * width) * 4;
+
+      // Set R, G, and B channels to random numbers
+      for (let i = 0; i < 3; ++i) {
+        if (textureBuffer[arrayPos + i] !== 0) return;
+
+        textureBuffer[arrayPos + i] = currentPixel.color[i];
+      }
+      // Set the alpha channel to max of 255
+      textureBuffer[arrayPos + 3] = 255;
+    }
+
+    // window.requestAnimationFrame(() => {
+    this.displaySprite.texture = PIXI.Texture.fromBuffer(
+      textureBuffer,
+      width,
+      height
+    );
+
+    if (shouldResume) this.play();
+    // });
+  };
+
+  initialize = (xPos, yPos) => {
+    // Stop if it's currently running so that we can reset things
+    // if (this.hasStarted) {
+    //   this.reset();
+    // }
+
+    if (this.hasStarted) return;
 
     this.hasStarted = true;
 
@@ -107,32 +161,16 @@ class RenderManager {
       PIXI.RenderTexture.create(width, height)
     ];
 
-    // We will start by rendering to the first texture
-    this.currentRenderTargetIndex = 0;
-
-    // Make a typed array where each color channel (R,G,B,A) is an element
-    const initialTextureBuffer = new Float32Array(width * height * 4);
-
-    const arrayPos = (xPos + yPos * width) * 4;
-
-    // Set R, G, and B channels to random numbers
-    for (let i = 0; i < 3; ++i) {
-      initialTextureBuffer[arrayPos + i] = Math.random();
-    }
-    // Set the alpha channel to max of 255
-    initialTextureBuffer[arrayPos + 3] = 1;
-
     // Initialize our display sprite with the initial texture buffer we just set up
     // This will be rendered to our first render target texture, and then after that we'll
     // just be swapping between the two render textures in a sort of feedback loop
-    this.displaySprite = new PIXI.Sprite(
-      PIXI.Texture.fromBuffer(initialTextureBuffer, width, height)
-    );
+    this.displaySprite = new PIXI.Sprite(this.textures[0]);
     this.displaySprite.filters = [this.shader];
 
     this.pixiApp.stage.addChild(this.displaySprite);
 
-    this.play();
+    // We will start by rendering to the second texture
+    this.currentRenderTargetIndex = 1;
   };
 
   reset = () => {
@@ -162,9 +200,7 @@ class RenderManager {
     // Mark that the loop is running
     this.isRunning = true;
 
-    this.completionCheckWorker.postMessage(
-      this.pixiApp.renderer.extract.pixels()
-    );
+    this.completionCheckWorker.postMessage(this.getDisplayPixels());
   };
 
   togglePlayPause = () => {
@@ -172,6 +208,3 @@ class RenderManager {
     else this.play();
   };
 }
-
-// Export a singleton instance of the render manager
-export default new RenderManager();

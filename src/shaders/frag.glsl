@@ -25,37 +25,36 @@ void main() {
   // Get the color for this pixel
   vec4 pixelColor = texture2D(uSampler, vTextureCoord);
 
-  if(pixelColor.a < 1.0) {
-    // Sum up the color values of all of the pixel's neighboring pixels
-    vec4 neighborColorSum = vec4(0);
-
-    // Go through all 8 neighboring pixels and sum their colors up
+  if(pixelColor.a < 1.0){
+    // Sum up the color values of all of the pixel's 8 neighboring pixels
     // Top left pixel
-    neighborColorSum += texture2D(uSampler, vec2(vTextureCoord.x - pixelWidth, vTextureCoord.y - pixelHeight));
+    vec4 averageColor = texture2D(uSampler, vec2(vTextureCoord.x - pixelWidth, vTextureCoord.y - pixelHeight)) +
     // Top pixel
-    neighborColorSum += texture2D(uSampler, vec2(vTextureCoord.x, vTextureCoord.y - pixelHeight));
+    texture2D(uSampler, vec2(vTextureCoord.x, vTextureCoord.y - pixelHeight)) +
     // Top right pixel
-    neighborColorSum += texture2D(uSampler, vec2(vTextureCoord.x + pixelWidth, vTextureCoord.y - pixelHeight));
+    texture2D(uSampler, vec2(vTextureCoord.x + pixelWidth, vTextureCoord.y - pixelHeight)) +
     // Left pixel
-    neighborColorSum += texture2D(uSampler, vec2(vTextureCoord.x - pixelWidth, vTextureCoord.y));
+    texture2D(uSampler, vec2(vTextureCoord.x - pixelWidth, vTextureCoord.y)) +
     // Right pixel
-    neighborColorSum += texture2D(uSampler, vec2(vTextureCoord.x + pixelWidth, vTextureCoord.y));
+    texture2D(uSampler, vec2(vTextureCoord.x + pixelWidth, vTextureCoord.y)) +
     // Bottom left pixel
-    neighborColorSum += texture2D(uSampler, vec2(vTextureCoord.x - pixelWidth, vTextureCoord.y + pixelHeight));
+    texture2D(uSampler, vec2(vTextureCoord.x - pixelWidth, vTextureCoord.y + pixelHeight)) +
     // Bottom pixel
-    neighborColorSum += texture2D(uSampler, vec2(vTextureCoord.x, vTextureCoord.y + pixelHeight));
+    texture2D(uSampler, vec2(vTextureCoord.x, vTextureCoord.y + pixelHeight)) +
     // Bottom right pixel
-    neighborColorSum += texture2D(uSampler, vec2(vTextureCoord.x + pixelWidth, vTextureCoord.y + pixelHeight));
+    texture2D(uSampler, vec2(vTextureCoord.x + pixelWidth, vTextureCoord.y + pixelHeight));
 
     // Since we know a filled pixel will have an alpha value of 1.0, we can determine how many neighbors have fill
     // by the alpha of the sum of all of the neighboring colors
-    float numberOfFilledPixels = neighborColorSum.a;
+    float numberOfFilledPixels = averageColor.a;
+
+    averageColor /= numberOfFilledPixels;
 
     pixelColor = vec4(
         // Make this pixel use the average color of its neighboring pixels, but with a small added random variation on the RGB channels
-        clamp(neighborColorSum.r / numberOfFilledPixels + (rand(gl_FragCoord.xy*randSeed*neighborColorSum.r) - 0.5) * colorVariability, 0.0, 1.0),
-        clamp(neighborColorSum.g / numberOfFilledPixels + (rand(gl_FragCoord.xy*randSeed*neighborColorSum.g) - 0.5) * colorVariability, 0.0, 1.0),
-        clamp(neighborColorSum.b / numberOfFilledPixels + (rand(gl_FragCoord.xy*randSeed*neighborColorSum.b) - 0.5) * colorVariability, 0.0, 1.0),
+        clamp(averageColor.r + (rand(gl_FragCoord.xy*randSeed*averageColor.r) - 0.5) * colorVariability, 0.0, 1.0),
+        clamp(averageColor.g + (rand(gl_FragCoord.xy*randSeed*averageColor.g) - 0.5) * colorVariability, 0.0, 1.0),
+        clamp(averageColor.b + (rand(gl_FragCoord.xy*randSeed*averageColor.b) - 0.5) * colorVariability, 0.0, 1.0),
         1.0
     )
     // Cast boolean to float so we can multiply by 0.0 if false or 1.0 if true
@@ -63,9 +62,10 @@ void main() {
     * float(
       // If 6 or more of this pixel's neighbors have fill, let's let this pixel fill in
       numberOfFilledPixels >= 6.0 || 
-      // Otherwise, if at least one neighboring pixel has fill, randomly determine if this pixel should be filled this frame
-      (numberOfFilledPixels >= 1.0 && rand(gl_FragCoord.xy*randSeed) < simulationSpeed * 0.33));
-  }
+      // If this pixel has any neighboring pixels with fill, randomly determine if it should be filled
+      (numberOfFilledPixels > 0.0 && rand(gl_FragCoord.xy*randSeed) < simulationSpeed * 0.33)
+    );
+  } 
 
   gl_FragColor = pixelColor;
 }

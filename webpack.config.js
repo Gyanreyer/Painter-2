@@ -1,5 +1,4 @@
 const path = require("path");
-// const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const UglifyJSPlugin = require("uglifyjs-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
@@ -29,10 +28,19 @@ module.exports = {
       },
       {
         test: /\.worker\.js$/,
-        use: {
-          loader: "worker-loader",
-          options: { fallback: true, inline: true }
-        }
+        use: [
+          {
+            loader: "worker-loader",
+            options: { fallback: true, inline: true }
+          },
+          {
+            loader: "babel-loader",
+            options: {
+              presets: ["@babel/preset-env"],
+              plugins: ["@babel/plugin-proposal-class-properties"]
+            }
+          }
+        ]
       },
       {
         test: /\.glsl$/,
