@@ -8,9 +8,6 @@ uniform float pixelWidth;
 uniform float pixelHeight;
 // A random seed generated externally each frame to help add additional randomness to the simulation
 uniform float randSeed;
-// The probabiliy of a pixel being filled in any given frame - when this is lower it translates to
-// the simulation going slower, hence the name
-uniform float dissolveSpeed;
 
 // Random number generation function taken from http://byteblacksmith.com/improvements-to-the-canonical-one-liner-glsl-rand-for-opengl-es-2-0/
 // GPUs are weird and can't really normally simulate randomness on their own,
@@ -24,10 +21,6 @@ highp float rand(vec2 co) {
     return fract(sin(sn) * c);
 }
 
-vec4 getPixelColor(vec2 coordinates){
-  return float(all(greaterThanEqual(coordinates, vec2(0.0))) && all(lessThanEqual(coordinates, vec2(1.0)))) * texture2D(uSampler, coordinates);
-}
-
 void main() {
   // Get the color for this pixel
   vec4 pixelColor = texture2D(uSampler, vTextureCoord);
@@ -35,29 +28,31 @@ void main() {
   if(pixelColor.a > 0.0){
     // Sum up the color values of all of the pixel's 8 neighboring pixels
     // Top left pixel
-    vec4 averageColor = getPixelColor(vec2(vTextureCoord.x - pixelWidth, vTextureCoord.y - pixelHeight)) +
+    vec4 averageColor = texture2D(uSampler, vec2(vTextureCoord.x - pixelWidth, vTextureCoord.y - pixelHeight)) +
       // Top pixel
-      getPixelColor(vec2(vTextureCoord.x, vTextureCoord.y - pixelHeight)) +
+      texture2D(uSampler, vec2(vTextureCoord.x, vTextureCoord.y - pixelHeight)) +
       // Top right pixel
-      getPixelColor(vec2(vTextureCoord.x + pixelWidth, vTextureCoord.y - pixelHeight)) +
+      texture2D(uSampler, vec2(vTextureCoord.x + pixelWidth, vTextureCoord.y - pixelHeight)) +
       // Left pixel
-      getPixelColor(vec2(vTextureCoord.x - pixelWidth, vTextureCoord.y)) +
+      texture2D(uSampler, vec2(vTextureCoord.x - pixelWidth, vTextureCoord.y)) +
       // Right pixel
-      getPixelColor(vec2(vTextureCoord.x + pixelWidth, vTextureCoord.y)) +
+      texture2D(uSampler, vec2(vTextureCoord.x + pixelWidth, vTextureCoord.y)) +
       // Bottom left pixel
-      getPixelColor(vec2(vTextureCoord.x - pixelWidth, vTextureCoord.y + pixelHeight)) +
+      texture2D(uSampler, vec2(vTextureCoord.x - pixelWidth, vTextureCoord.y + pixelHeight)) +
       // Bottom pixel
-      getPixelColor(vec2(vTextureCoord.x, vTextureCoord.y + pixelHeight)) +
+      texture2D(uSampler, vec2(vTextureCoord.x, vTextureCoord.y + pixelHeight)) +
       // Bottom right pixel
-      getPixelColor(vec2(vTextureCoord.x + pixelWidth, vTextureCoord.y + pixelHeight));
+      texture2D(uSampler, vec2(vTextureCoord.x + pixelWidth, vTextureCoord.y + pixelHeight));
 
+    // Since we know a filled pixel will have an alpha value of 1.0, we can determine how many neighbors have fill
+    // by the alpha of the sum of all of the neighboring colors
     float numberOfFilledPixels = averageColor.a;
 
     // 8 filled pixels = highest probability of true
     // 0 filled pixels = guaranteed false
     // More filled pixels = higher probability this will evaluate to true (multiply by 1, no change)
     // Less filled pixels = higher probability this will evaluate to false (multiply by 0)
-    pixelColor *= float(rand(gl_FragCoord.xy*randSeed) < numberOfFilledPixels * 0.12475);
+    pixelColor *= float(rand(vTextureCoord.xy*randSeed) < numberOfFilledPixels * 0.12475);
   }
 
   gl_FragColor = pixelColor;

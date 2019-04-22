@@ -43,7 +43,8 @@ export default class InputManager {
   };
 
   onMouseDown = event => {
-    const { mouseX, mouseY } = this.getClampedMousePos(event);
+    const mouseX = event.clientX;
+    const mouseY = event.clientY;
 
     this.lastMousePosition = {
       x: mouseX,
@@ -66,7 +67,8 @@ export default class InputManager {
   onMouseMove = event => {
     if (!this.isMouseDown) return;
 
-    const { mouseX, mouseY } = this.getClampedMousePos(event);
+    const mouseX = event.clientX;
+    const mouseY = event.clientY;
 
     let lastX = this.lastMousePosition.x;
     let lastY = this.lastMousePosition.y;
@@ -95,11 +97,19 @@ export default class InputManager {
         lastY += slopeY;
       }
 
-      pixelQueue.push({
-        x: Math.round(lastX),
-        y: Math.round(lastY),
-        color: this.mouseColor
-      });
+      // Only add pixels that are on screen
+      if (
+        lastX >= 0 &&
+        lastX < window.innerWidth &&
+        lastX >= 0 &&
+        lastY < window.innerHeight
+      ) {
+        pixelQueue.push({
+          x: Math.round(lastX),
+          y: Math.round(lastY),
+          color: this.mouseColor
+        });
+      }
       this.updateNextMouseColor();
     } while (lastX !== mouseX || lastY !== mouseY);
 
@@ -130,9 +140,4 @@ export default class InputManager {
         break;
     }
   };
-
-  getClampedMousePos = event => ({
-    mouseX: Math.min(Math.max(event.clientX, 0), window.innerWidth-1),
-    mouseY: Math.min(Math.max(event.clientY, 0), window.innerHeight-1)
-  });
 }

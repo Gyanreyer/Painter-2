@@ -24,8 +24,7 @@ const defaultPaintShaderUniformValues = {
   randSeed: Math.random(),
   pixelWidth: 1 / window.innerWidth,
   pixelHeight: 1 / window.innerHeight,
-  colorVariability: 0.04,
-  simulationSpeed: 1.0
+  colorVariability: 0.04
 };
 
 const defaultDissolveShaderUniformValues = {
@@ -42,6 +41,11 @@ export default class RenderManager {
       height: window.innerHeight,
       transparent: true
     });
+
+    PIXI.settings.ROUND_PIXELS = true;
+    // NOTE: this setting is required in order to prevent potential
+    // weird rendering behavior in certain browsers
+    PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
     document.body.appendChild(this.pixiApp.view);
 
@@ -90,11 +94,16 @@ export default class RenderManager {
   onWindowResize = () => {
     clearTimeout(this.resizeTimeout);
 
+    // Determine if we should resume playback after we finish resizing
     if (!this.shouldResume) {
       this.shouldResume =
+        // Should resume if playback is in progress
         this.mode === RENDER_MANAGER_MODES.Playing ||
-        this.mode === RENDER_MANAGER_MODES.Complete;
-
+        // Should also start playing again if the screen is filled with pixels and the new
+        // window size is larger than it was before - this way we can fill in the new empty space that was created!
+        (this.mode === RENDER_MANAGER_MODES.Complete &&
+          (this.pixiApp.renderer.width < window.innerWidth ||
+            this.pixiApp.renderer.height < window.innerHeight));
       if (this.shouldResume) this.pause();
     }
 
@@ -106,8 +115,6 @@ export default class RenderManager {
       );
 
       this.render();
-
-      this.swapRenderTextures();
 
       this.textures[this.currentRenderTargetIndex].resize(
         window.innerWidth,
@@ -161,26 +168,28 @@ export default class RenderManager {
     // This will be rendered to our first render target texture, and then after that we'll
     // just be swapping between the two render textures in a sort of feedback loop
     this.displaySprite = new PIXI.Sprite(this.textures[0]);
-    this.setPlayDirection(PLAY_DIRECTION.Forward);
+    // We will start by rendering to the second texture since we're using the first one as the display texture
+    this.currentRenderTargetIndex = 1;
 
+    // Initialize our user input sprite - this is a special sprite which will be hidden most of the time, but
+    // when the user clicks and drags to paint new pixels, we will use this sprite's texture to render those
+    // pixels onto our render textures
+    this.userInputSprite = new PIXI.Sprite();
+    this.userInputSprite.visible = false;
+
+    // Add sprites to stage
+    // Note that order here matters - we want to ensure the user input sprite is rendered underneath
+    // so that it can't overwrite any pixels that have already been colored
+    this.pixiApp.stage.addChild(this.userInputSprite);
     this.pixiApp.stage.addChild(this.displaySprite);
 
-    // We will start by rendering to the second texture
-    this.currentRenderTargetIndex = 1;
+    // Set the default play direction as forward
+    this.setPlayDirection(PLAY_DIRECTION.Forward);
   };
 
   // Gets pixel data for the display sprite as a Uint8Array
   getDisplayPixels = () =>
     this.pixiApp.renderer.extract.pixels(this.displaySprite);
-
-  swapRenderTextures = () => {
-    // Swap the display sprite's texture to the target we just rendered to
-    this.displaySprite.texture = this.textures[this.currentRenderTargetIndex];
-
-    // Toggle target index between 0 and 1 each frame so we alternate which is the render target
-    // and which is the input
-    this.currentRenderTargetIndex = 1 - this.currentRenderTargetIndex;
-  };
 
   // Renders to canvas each frame
   render = () => {
@@ -189,30 +198,35 @@ export default class RenderManager {
       this.pixiApp.stage,
       this.textures[this.currentRenderTargetIndex]
     );
+
+    // Swap the display sprite's texture to the target we just rendered to
+    this.displaySprite.texture = this.textures[this.currentRenderTargetIndex];
+
+    // Toggle target index between 0 and 1 each frame so we alternate which is the render target
+    // and which is the input
+    this.currentRenderTargetIndex = 1 - this.currentRenderTargetIndex;
   };
 
-  update = (timestamp, shouldExecuteOnce) => {
+  update = timestamp => {
+    // Manually update the Pixi ticker
     this.ticker.update(timestamp);
 
-    if (!shouldExecuteOnce) {
-      this.updateFrameRequest = requestAnimationFrame(this.update);
-    }
-
+    // Render our display sprite onto the target render texture
     this.render();
 
-    // Update the random seeds for our shaders
-    this.paintShader.uniforms.randSeed = Math.random();
-    this.dissolveShader.uniforms.randSeed = Math.random();
+    // Update the random seeds for our shaders for next frame
+    this.paintShader.uniforms.randSeed = this.dissolveShader.uniforms.randSeed = Math.random();
 
-    this.swapRenderTextures();
+    this.updateFrameRequest = requestAnimationFrame(this.update);
   };
 
   handlePixelQueue = pixelQueue => {
     const { width, height } = this.pixiApp.renderer;
 
-    // Get an array of all pixels in the current display texture
-    const textureBuffer = this.getDisplayPixels();
+    // Make an empty pixel array for the texture buffer
+    const textureBuffer = new Uint8Array(width * height * 4);
 
+    // Apply all pixels from queue to the texture buffer
     for (let i = 0, numPixels = pixelQueue.length; i < numPixels; ++i) {
       const currentPixel = pixelQueue[i];
       const arrayPos = (currentPixel.x + currentPixel.y * width) * 4;
@@ -227,11 +241,24 @@ export default class RenderManager {
       textureBuffer[arrayPos + 3] = 255;
     }
 
-    this.displaySprite.texture = PIXI.Texture.fromBuffer(
+    // Make the user input sprite visible and set its texture to use the texture buffer we created
+    this.userInputSprite.visible = true;
+    this.userInputSprite.texture = PIXI.Texture.fromBuffer(
       textureBuffer,
       width,
       height
     );
+
+    // Force a re-render of the scene to apply the user input texture to the display texture
+    // Temporarily disable the paint shader during this process so that we don't progress the simulation
+    // additional steps
+    this.paintShader.enabled = false;
+    this.render();
+    this.paintShader.enabled = true;
+
+    // Destroy the user input sprite's texture and hide it again
+    this.userInputSprite.texture.destroy();
+    this.userInputSprite.visible = false;
 
     if (this.mode === RENDER_MANAGER_MODES.Unstarted) {
       this.setPlayDirection(PLAY_DIRECTION.Forward);

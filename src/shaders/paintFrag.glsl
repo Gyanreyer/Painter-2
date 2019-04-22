@@ -10,9 +10,6 @@ uniform float pixelHeight;
 uniform float randSeed;
 // The amount by which each color channel can be varied from the average color of its neighbors
 uniform float colorVariability;
-// The probabiliy of a pixel being filled in any given frame - when this is lower it translates to
-// the simulation going slower, hence the name
-uniform float simulationSpeed;
 
 // Random number generation function taken from http://byteblacksmith.com/improvements-to-the-canonical-one-liner-glsl-rand-for-opengl-es-2-0/
 // GPUs are weird and can't really normally simulate randomness on their own,
@@ -55,20 +52,22 @@ void main() {
 
     averageColor /= numberOfFilledPixels;
 
+    vec2 randCoordSeed = vTextureCoord.xy * randSeed;
+
     pixelColor = vec4(
         // Make this pixel use the average color of its neighboring pixels, but with a small added random variation on the RGB channels
-        clamp(averageColor.r + (rand(gl_FragCoord.xy*randSeed*averageColor.r) - 0.5) * colorVariability, 0.0, 1.0),
-        clamp(averageColor.g + (rand(gl_FragCoord.xy*randSeed*averageColor.g) - 0.5) * colorVariability, 0.0, 1.0),
-        clamp(averageColor.b + (rand(gl_FragCoord.xy*randSeed*averageColor.b) - 0.5) * colorVariability, 0.0, 1.0),
+        clamp(averageColor.r + (rand(randCoordSeed*averageColor.r) - 0.5) * colorVariability, 0.0, 1.0),
+        clamp(averageColor.g + (rand(randCoordSeed*averageColor.g) - 0.5) * colorVariability, 0.0, 1.0),
+        clamp(averageColor.b + (rand(randCoordSeed*averageColor.b) - 0.5) * colorVariability, 0.0, 1.0),
         1.0
     )
     // Cast boolean to float so we can multiply by 0.0 if false or 1.0 if true
     // Since each pixel is <0,0,0,0> by default, the vector will stay that way until the following conditions evaluate to true
     * float(
       // If 6 or more of this pixel's neighbors have fill, let's let this pixel fill in
-      numberOfFilledPixels >= 6.0 || 
+      numberOfFilledPixels >= 6.0 ||
       // If this pixel has any neighboring pixels with fill, randomly determine if it should be filled
-      (numberOfFilledPixels > 0.0 && rand(gl_FragCoord.xy*randSeed) < simulationSpeed * 0.33)
+      (numberOfFilledPixels > 0.0 && rand(randCoordSeed) < 0.33)
     );
   }
 
