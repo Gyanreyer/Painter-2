@@ -1,6 +1,5 @@
 import * as PIXI from "pixi.js";
 
-import { getColorChannelValue } from "./utils/colors";
 import pixiApp from "./pixiApp";
 import render from "./render";
 import paintShader from "./shaders/paintShader";
@@ -11,102 +10,13 @@ userInputPixelDrawerSprite.zIndex = 0;
 
 pixiApp.stage.addChild(userInputPixelDrawerSprite);
 
-let currentColor: Uint8Array;
-
-export const getNewColor = (): Uint8Array => {
-  currentColor = new Uint8Array([
-    getColorChannelValue(),
-    getColorChannelValue(),
-    getColorChannelValue(),
-  ]);
-
-  return currentColor;
-};
-
-export const getNextBlendedColor = (): Uint8Array => {
-  currentColor[0] = getColorChannelValue(currentColor[0]);
-  currentColor[1] = getColorChannelValue(currentColor[1]);
-  currentColor[2] = getColorChannelValue(currentColor[2]);
-
-  return currentColor;
-};
-
 type pixelData = {
   x: number;
   y: number;
   color: Uint8Array;
 };
 
-window.addEventListener("pointerdown", (event) => {
-  let previousPointerX = Math.round(event.x);
-  let previousPointerY = Math.round(event.y);
-
-  handlePixelQueue([
-    {
-      x: previousPointerX,
-      y: previousPointerY,
-      color: getNewColor(),
-    },
-  ]);
-
-  function onPointerMove(event) {
-    const newPointerX = Math.round(event.x);
-    const newPointerY = Math.round(event.y);
-
-    const pointerXChange = newPointerX - previousPointerX;
-    const pointerYChange = newPointerY - previousPointerY;
-
-    const diffX = Math.abs(pointerXChange);
-    const diffY = Math.abs(pointerYChange);
-
-    const slopeX = Math.sign(pointerXChange);
-    const slopeY = Math.sign(pointerYChange);
-
-    let err = diffX - diffY;
-
-    let x = previousPointerX;
-    let y = previousPointerY;
-
-    const pixelQueue = [];
-
-    do {
-      const err2 = err << 1;
-      if (err2 > -diffY) {
-        err -= diffY;
-        x += slopeX;
-      }
-      if (err2 < diffX) {
-        err += diffX;
-        y += slopeY;
-      }
-
-      // Only add pixels that are on screen
-      if (x >= 0 && x < window.innerWidth && y >= 0 && y < window.innerHeight) {
-        pixelQueue.push({
-          x,
-          y,
-          color: getNextBlendedColor(),
-        });
-      }
-    } while (x !== newPointerX || y !== newPointerY);
-
-    handlePixelQueue(pixelQueue);
-
-    previousPointerX = newPointerX;
-    previousPointerY = newPointerY;
-  }
-
-  window.addEventListener("pointermove", onPointerMove);
-
-  function onPointerUp() {
-    // Disable event listeners when the user lifts their mouse
-    window.removeEventListener("pointermove", onPointerMove);
-    window.removeEventListener("pointerup", onPointerUp);
-  }
-  window.addEventListener("pointerup", onPointerUp);
-});
-
-function handlePixelQueue(pixelQueue: pixelData[]) {
+export default function drawPixels(pixelQueue: pixelData[]) {
   const width = pixiApp.renderer.width;
   const height = pixiApp.renderer.height;
 

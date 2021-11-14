@@ -2,6 +2,11 @@ import * as PIXI from "pixi.js";
 
 import pixiApp from "./pixiApp";
 import paintShader from "./shaders/paintShader";
+import dissolveShader from "./shaders/dissolveShader";
+import {
+  addPlaybackStateChangeListener,
+  PLAYBACK_STATES,
+} from "./playbackState";
 
 const textures = [
   PIXI.RenderTexture.create({
@@ -56,6 +61,16 @@ displaySprite.filters = [paintShader];
 
 pixiApp.stage.addChild(displaySprite);
 
+addPlaybackStateChangeListener((newPlaybackState) => {
+  // Update the shader to apply to the display sprite
+  // when the playback state changes
+  if (newPlaybackState === PLAYBACK_STATES.FORWARD) {
+    displaySprite.filters = [paintShader];
+  } else if (newPlaybackState === PLAYBACK_STATES.REVERSE) {
+    displaySprite.filters = [dissolveShader];
+  }
+});
+
 export default function render() {
   pixiApp.renderer.render(pixiApp.stage, {
     renderTexture: getRenderTargetTexture(),
@@ -64,5 +79,7 @@ export default function render() {
   swapDisplayTexture();
 
   // Update the random seed for our shaders for next frame
-  paintShader.uniforms.randSeed = Math.random();
+  const newRandSeed = Math.random();
+  paintShader.uniforms.randSeed = newRandSeed;
+  dissolveShader.uniforms.randSeed = newRandSeed;
 }
