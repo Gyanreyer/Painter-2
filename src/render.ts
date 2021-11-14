@@ -83,3 +83,7 @@ export default function render() {
   paintShader.uniforms.randSeed = newRandSeed;
   dissolveShader.uniforms.randSeed = newRandSeed;
 }
+
+export function getDisplayPixelsArray(): Uint8ClampedArray {
+  return pixiApp.renderer.plugins.extract.pixels(getDisplayTexture());
+}

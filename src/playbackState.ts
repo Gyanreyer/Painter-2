@@ -1,15 +1,17 @@
 export const PLAYBACK_STATES = {
   // The canvas is blank
-  EMPTY: 0,
+  EMPTY: "EMPTY",
   // The canvas is clearing with dissolveShader
-  REVERSE: 1,
+  REVERSE: "REVERSE",
+  REVERSE_PAUSED: "REVERSE_PAUSED",
   // The canvas is filling up with painterShader
-  FORWARD: 2,
+  FORWARD: "FORWARD",
+  FORWARD_PAUSED: "FORWARD_PAUSED",
   // The canvas is filled
-  DONE: 3,
+  DONE: "DONE",
 };
 
-let playbackState = PLAYBACK_STATES.FORWARD;
+let playbackState = PLAYBACK_STATES.EMPTY;
 
 const playbackStateChangeListeners: Set<
   (newPlaybackState: number, previousPlaybackState: number) => void

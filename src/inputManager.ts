@@ -30,6 +30,25 @@ export default function startInputManager() {
           updatePlaybackState(PLAYBACK_STATES.FORWARD);
         }
         break;
+      // Space bar toggles playback into a paused/unpaused state
+      case " ":
+      case "Space":
+        switch (currentPlaybackState) {
+          case PLAYBACK_STATES.FORWARD:
+            updatePlaybackState(PLAYBACK_STATES.FORWARD_PAUSED);
+            break;
+          case PLAYBACK_STATES.FORWARD_PAUSED:
+            updatePlaybackState(PLAYBACK_STATES.FORWARD);
+            break;
+          case PLAYBACK_STATES.REVERSE:
+            updatePlaybackState(PLAYBACK_STATES.REVERSE_PAUSED);
+            break;
+          case PLAYBACK_STATES.REVERSE_PAUSED:
+            updatePlaybackState(PLAYBACK_STATES.REVERSE);
+            break;
+          default:
+        }
+
       default:
     }
   });

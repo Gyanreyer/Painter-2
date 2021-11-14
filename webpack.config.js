@@ -45,25 +45,6 @@ module.exports = {
           "sass-loader",
         ],
       },
-      // {
-      //   test: /\.worker\.ts$/,
-      //   use: [
-      //     {
-      //       loader: "swc-loader",
-      //       options: {
-      //         jsc: {
-      //           parser: {
-      //             syntax: "typescript",
-      //           },
-      //         },
-      //       },
-      //     },
-      //     {
-      //       loader: "worker-loader",
-      //       options: { fallback: true, inline: true },
-      //     },
-      //   ],
-      // },
       {
         test: /\.glsl$/,
         use: ["raw-loader", "glslify-loader"],
