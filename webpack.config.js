@@ -1,60 +1,91 @@
 const path = require("path");
-const TerserPlugin = require("terser-webpack-plugin");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const HTMLWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
-  entry: ["@babel/polyfill", "./src/index.js"],
+  entry: ["./src/index.ts"],
   output: {
     filename: "bundle.js",
-    path: path.resolve(__dirname, "dist")
+    path: path.resolve(__dirname, "dist"),
+  },
+  resolve: {
+    extensions: [".ts", ".js", ".json"],
+  },
+  devServer: {
+    static: {
+      directory: path.join(__dirname, "dist"),
+    },
+    compress: true,
+    port: 9000,
   },
   module: {
     rules: [
       {
-        test: /\.m?js$/,
+        test: /\.ts$/,
         exclude: /node_modules/,
         use: {
-          loader: "babel-loader",
+          loader: "swc-loader",
           options: {
-            presets: ["@babel/preset-env"],
-            plugins: ["@babel/plugin-proposal-class-properties"]
-          }
-        }
+            jsc: {
+              parser: {
+                syntax: "typescript",
+              },
+            },
+            sourceMap: true,
+          },
+        },
       },
       {
         test: /\.scss$/,
-        use: [MiniCssExtractPlugin.loader, "css-loader", "sass-loader"]
-      },
-      {
-        test: /\.worker\.js$/,
         use: [
-          {
-            loader: "worker-loader",
-            options: { fallback: true, inline: true }
-          },
-          {
-            loader: "babel-loader",
-            options: {
-              presets: ["@babel/preset-env"],
-              plugins: ["@babel/plugin-proposal-class-properties"]
-            }
-          }
-        ]
+          // Creates `style` nodes from JS strings
+          "style-loader",
+          // Translates CSS into CommonJS
+          "css-loader",
+          // Compiles Sass to CSS
+          "sass-loader",
+        ],
       },
+      // {
+      //   test: /\.worker\.ts$/,
+      //   use: [
+      //     {
+      //       loader: "swc-loader",
+      //       options: {
+      //         jsc: {
+      //           parser: {
+      //             syntax: "typescript",
+      //           },
+      //         },
+      //       },
+      //     },
+      //     {
+      //       loader: "worker-loader",
+      //       options: { fallback: true, inline: true },
+      //     },
+      //   ],
+      // },
       {
         test: /\.glsl$/,
-        use: ["raw-loader", "glslify-loader"]
-      }
-    ]
+        use: ["raw-loader", "glslify-loader"],
+      },
+    ],
   },
   plugins: [
-    new MiniCssExtractPlugin({
-      filename: "bundle.css"
+    // new MiniCssExtractPlugin({
+    //   filename: "bundle.css",
+    // }),
+    // new OptimizeCssAssetsPlugin(),
+    new HTMLWebpackPlugin({
+      template: "./src/index.html",
+      // favicon: "./src/resources/icons/favicon.ico",
+      minify: {
+        collapseWhitespace: true,
+        removeComments: true,
+        removeRedundantAttributes: true,
+        removeScriptTypeAttributes: true,
+        removeStyleLinkTypeAttributes: true,
+        useShortDoctype: true,
+      },
     }),
-    new OptimizeCssAssetsPlugin()
   ],
-  optimization: {
-    minimizer: [new TerserPlugin()]
-  }
 };

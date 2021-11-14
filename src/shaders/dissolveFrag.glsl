@@ -52,7 +52,11 @@ void main() {
     // 0 filled pixels = guaranteed false
     // More filled pixels = higher probability this will evaluate to true (multiply by 1, no change)
     // Less filled pixels = higher probability this will evaluate to false (multiply by 0)
-    pixelColor *= float(rand(vTextureCoord.xy*randSeed) < numberOfFilledPixels * 0.12475);
+    // 0.1248 is a semi-arbitrary number I came to which feels like it produces a decent animation speed
+    // Note that the number HAS to be < 0.125 (1/8) because otherwise it would become impossible for pixels
+    // with 8 neighbors to be cleared, meaning that it would become impossible to dissolve the painting
+    // once every pixel gets filled
+    pixelColor *= float(rand(vTextureCoord.xy*randSeed) < numberOfFilledPixels * 0.1248);
   }
 
   gl_FragColor = pixelColor;
