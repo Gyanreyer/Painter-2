@@ -52,13 +52,8 @@ module.exports = {
     ],
   },
   plugins: [
-    // new MiniCssExtractPlugin({
-    //   filename: "bundle.css",
-    // }),
-    // new OptimizeCssAssetsPlugin(),
     new HTMLWebpackPlugin({
       template: "./src/index.html",
-      // favicon: "./src/resources/icons/favicon.ico",
       minify: {
         collapseWhitespace: true,
         removeComments: true,

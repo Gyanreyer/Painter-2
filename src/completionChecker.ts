@@ -1,15 +1,26 @@
+import * as Comlink from "comlink";
 import {
   addPlaybackStateChangeListener,
   PLAYBACK_STATES,
   updatePlaybackState,
 } from "./playbackState";
 import { getDisplayPixelsArray } from "./render";
+import { DissolveCompletionChecker } from "./workers/dissolveCompletionChecker.worker";
+import { PaintCompletionChecker } from "./workers/paintCompletionChecker.worker";
 
-import PaintCompletionCheckWorker from "worker-loader!./workers/paintCompletionChecker.worker";
-import DissolveCompletionCheckWorker from "worker-loader!./workers/dissolveCompletionChecker.worker";
+const paintCompletionCheckWorker = new Worker(
+  new URL("./workers/paintCompletionChecker.worker", import.meta.url)
+);
+const paintCompletionChecker = Comlink.wrap<PaintCompletionChecker>(
+  paintCompletionCheckWorker
+);
 
-const paintCompletionChecker = new PaintCompletionCheckWorker();
-const dissolveCompletionChecker = new DissolveCompletionCheckWorker();
+const dissolveCompletionCheckWorker = new Worker(
+  new URL("./workers/dissolveCompletionChecker.worker", import.meta.url)
+);
+const dissolveCompletionChecker = Comlink.wrap<DissolveCompletionChecker>(
+  dissolveCompletionCheckWorker
+);
 
 let completionCheckTimeoutId;
 
@@ -19,8 +30,6 @@ let completionCheckTimeoutId;
 export default function startCompletionChecker() {
   addPlaybackStateChangeListener((newPlaybackState) => {
     clearTimeout(completionCheckTimeoutId);
-    paintCompletionChecker.onmessage = null;
-    dissolveCompletionChecker.onmessage = null;
 
     if (
       newPlaybackState !== PLAYBACK_STATES.FORWARD &&
@@ -33,25 +42,19 @@ export default function startCompletionChecker() {
         ? paintCompletionChecker
         : dissolveCompletionChecker;
 
-    let lastIncompletePixelIndex = 0;
+    completionChecker.reset();
 
-    const checkIsComplete = () => {
-      const displayPixelBuffer = getDisplayPixelsArray().buffer;
+    (async function checkIsComplete() {
+      const displayPixelArray = getDisplayPixelsArray();
 
-      completionChecker.postMessage(
-        {
-          displayPixelBuffer,
-          lastIncompletePixelIndex,
-        },
+      const isComplete = await completionChecker.checkIsComplete(
         // Transfer ownership of the pixel buffer to the worker
         // Note that this means displayPixelBuffer will no longer be usable
         // within this checkIsPaintComplete context
-        [displayPixelBuffer]
+        Comlink.transfer(displayPixelArray, [displayPixelArray.buffer])
       );
-    };
 
-    completionChecker.onmessage = (event) => {
-      if (event.data.isComplete) {
+      if (isComplete) {
         updatePlaybackState(
           newPlaybackState === PLAYBACK_STATES.FORWARD
             ? PLAYBACK_STATES.DONE
@@ -60,11 +63,7 @@ export default function startCompletionChecker() {
         return;
       }
 
-      lastIncompletePixelIndex = event.data.lastIncompletePixelIndex;
-
       completionCheckTimeoutId = setTimeout(checkIsComplete, 500);
-    };
-
-    checkIsComplete();
+    })();
   });
 }

@@ -85,5 +85,11 @@ export default function render() {
 }
 
 export function getDisplayPixelsArray(): Uint8ClampedArray {
-  return pixiApp.renderer.plugins.extract.pixels(getDisplayTexture());
+  const { gl, width, height } = pixiApp.renderer as PIXI.Renderer;
+
+  const pixels = new Uint8ClampedArray(4 * width * height);
+
+  gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+  return pixels;
 }

@@ -9,6 +9,7 @@ const pixiApp = new PIXI.Application({
   width: window.innerWidth,
   height: window.innerHeight,
   backgroundAlpha: 0,
+  preserveDrawingBuffer: true,
 });
 // Enable setting z-indices on sprites in our stage
 pixiApp.stage.sortableChildren = true;

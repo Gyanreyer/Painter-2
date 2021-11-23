@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "es6",
+    "module": "esnext",
+    "lib": [
+      "webworker",
+      "esnext"
+    ],
+    "moduleResolution": "node",
+    "noUnusedLocals": true,
+    "sourceMap": true,
+    "allowJs": false,
+    "baseUrl": "."
+  }
+}
