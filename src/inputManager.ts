@@ -16,19 +16,27 @@ export default function startInputManager() {
       // The "R" key switches playback state to reverse
       case "r":
       case "KeyR":
-        if (
-          currentPlaybackState === PLAYBACK_STATES.FORWARD ||
-          currentPlaybackState === PLAYBACK_STATES.DONE
-        ) {
-          updatePlaybackState(PLAYBACK_STATES.REVERSE);
+        switch (currentPlaybackState) {
+          case PLAYBACK_STATES.FORWARD:
+          case PLAYBACK_STATES.FORWARD_PAUSED:
+          case PLAYBACK_STATES.DONE:
+            updatePlaybackState(PLAYBACK_STATES.REVERSE);
+            break;
+          default:
         }
+
         break;
       // The "F" key switches playback state to forward if it's currently going in reverse
       case "f":
       case "KeyF":
-        if (currentPlaybackState === PLAYBACK_STATES.REVERSE) {
-          updatePlaybackState(PLAYBACK_STATES.FORWARD);
+        switch (currentPlaybackState) {
+          case PLAYBACK_STATES.REVERSE:
+          case PLAYBACK_STATES.REVERSE_PAUSED:
+            updatePlaybackState(PLAYBACK_STATES.FORWARD);
+            break;
+          default:
         }
+
         break;
       // Space bar toggles playback into a paused/unpaused state
       case " ":
@@ -47,6 +55,7 @@ export default function startInputManager() {
             updatePlaybackState(PLAYBACK_STATES.REVERSE);
             break;
           default:
+          // Don't do anything if the canvas is empty or playback is done
         }
 
       default:
@@ -56,16 +65,18 @@ export default function startInputManager() {
   window.addEventListener("pointerdown", (event) => {
     const currentPlaybackState = getPlaybackState();
 
-    // If the current playback state is either done or going in reverse,
-    // ignore any attempts to paint
-    if (
-      currentPlaybackState === PLAYBACK_STATES.REVERSE ||
-      currentPlaybackState === PLAYBACK_STATES.DONE
-    )
-      return;
-
-    if (currentPlaybackState !== PLAYBACK_STATES.FORWARD) {
-      updatePlaybackState(PLAYBACK_STATES.FORWARD);
+    switch (currentPlaybackState) {
+      case PLAYBACK_STATES.REVERSE:
+      case PLAYBACK_STATES.REVERSE_PAUSED:
+      case PLAYBACK_STATES.DONE:
+        // If the current playback state is either done or going in reverse,
+        // return early to ignore any attempts to paint
+        return;
+      case PLAYBACK_STATES.EMPTY:
+        updatePlaybackState(PLAYBACK_STATES.FORWARD);
+        break;
+      default:
+      // Don't do anything if the playback state is already forward or paused
     }
 
     let previousPointerX = Math.round(event.x);

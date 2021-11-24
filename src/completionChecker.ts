@@ -22,27 +22,43 @@ const dissolveCompletionChecker = Comlink.wrap<DissolveCompletionChecker>(
   dissolveCompletionCheckWorker
 );
 
-let completionCheckTimeoutId;
-
 // While we're painting or dissolving, perform infrequent checks
 // on the pixel data to determine if all possible pixels have been
 // painted/dissolved and if so, update playback state
 export default function startCompletionChecker() {
-  addPlaybackStateChangeListener((newPlaybackState) => {
-    clearTimeout(completionCheckTimeoutId);
+  addPlaybackStateChangeListener((playbackState: PLAYBACK_STATES) => {
+    console.log(playbackState);
 
     if (
-      newPlaybackState !== PLAYBACK_STATES.FORWARD &&
-      newPlaybackState !== PLAYBACK_STATES.REVERSE
+      playbackState !== PLAYBACK_STATES.FORWARD &&
+      playbackState !== PLAYBACK_STATES.REVERSE
     )
       return;
 
     const completionChecker =
-      newPlaybackState === PLAYBACK_STATES.FORWARD
+      playbackState === PLAYBACK_STATES.FORWARD
         ? paintCompletionChecker
         : dissolveCompletionChecker;
 
-    completionChecker.reset();
+    let isCompletionCheckCanceled = false;
+    let completionCheckTimeoutId = null;
+
+    const removePlaybackStateChangeListener = addPlaybackStateChangeListener(
+      (newPlaybackState) => {
+        if (newPlaybackState !== playbackState) {
+          // If the playback state changes while our completion check is in progress,
+          // mark that the completion check loop should be canceled
+          isCompletionCheckCanceled = true;
+          clearTimeout(completionCheckTimeoutId);
+
+          // Reset the completion checker's state
+          completionChecker.reset();
+
+          // Remove this playback state listener now that it's detected a state change
+          removePlaybackStateChangeListener();
+        }
+      }
+    );
 
     (async function checkIsComplete() {
       const displayPixelArray = getDisplayPixelsArray();
@@ -54,16 +70,21 @@ export default function startCompletionChecker() {
         Comlink.transfer(displayPixelArray, [displayPixelArray.buffer])
       );
 
+      // If the completion check loop is cancelled, return early
+      if (isCompletionCheckCanceled) return;
+
       if (isComplete) {
         updatePlaybackState(
-          newPlaybackState === PLAYBACK_STATES.FORWARD
+          playbackState === PLAYBACK_STATES.FORWARD
             ? PLAYBACK_STATES.DONE
             : PLAYBACK_STATES.EMPTY
         );
         return;
       }
 
-      completionCheckTimeoutId = setTimeout(checkIsComplete, 500);
+      // Wait 200ms and then run another completion check; this allows us to keep the performance impact
+      // of these checks lower while being just frequent enough to feel fairly responsive to the user
+      completionCheckTimeoutId = setTimeout(checkIsComplete, 200);
     })();
   });
 }
