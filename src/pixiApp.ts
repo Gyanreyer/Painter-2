@@ -16,12 +16,4 @@ pixiApp.stage.sortableChildren = true;
 
 document.body.appendChild(pixiApp.view);
 
-window.addEventListener(
-  "resize",
-  () => {
-    pixiApp.renderer.resize(window.innerWidth, window.innerHeight);
-  },
-  { passive: true }
-);
-
 export default pixiApp;

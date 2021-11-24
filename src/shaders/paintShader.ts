@@ -25,14 +25,4 @@ const paintShader = new PIXI.Filter(
   defaultPaintShaderUniformValues
 );
 
-window.addEventListener(
-  "resize",
-  () => {
-    // Update the shader uniform's pixel size when the window resizes
-    paintShader.uniforms.pixelWidth = 1 / window.innerWidth;
-    paintShader.uniforms.pixelHeight = 1 / window.innerHeight;
-  },
-  { passive: true }
-);
-
 export default paintShader;

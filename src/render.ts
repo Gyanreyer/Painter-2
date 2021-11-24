@@ -19,8 +19,6 @@ const textures = [
   }),
 ];
 
-let textureResizeAnimationFrameId;
-
 let displayTextureIndex = 0;
 
 // Returns the texture that isn't currently set on the display sprite
@@ -35,27 +33,10 @@ function getDisplayTexture() {
 
 function swapDisplayTexture() {
   displayTextureIndex = 1 - displayTextureIndex;
-  displaySprite.texture = textures[displayTextureIndex];
+  displaySprite.texture = getDisplayTexture();
 }
 
-window.addEventListener(
-  "resize",
-  () => {
-    cancelAnimationFrame(textureResizeAnimationFrameId);
-
-    textureResizeAnimationFrameId = requestAnimationFrame(() => {
-      // Resize the textures when the window resizes
-      const newWidth = window.innerWidth;
-      const newHeight = window.innerHeight;
-      getRenderTargetTexture().resize(newWidth, newHeight);
-      render();
-      getDisplayTexture().resize(newWidth, newHeight);
-    });
-  },
-  { passive: true }
-);
-
-const displaySprite = new PIXI.Sprite(textures[displayTextureIndex]);
+const displaySprite = new PIXI.Sprite(getDisplayTexture());
 displaySprite.zIndex = 1;
 displaySprite.filters = [paintShader];
 
@@ -84,6 +65,11 @@ export default function render() {
   dissolveShader.uniforms.randSeed = newRandSeed;
 }
 
+/**
+ * Extracts the canvas' pixel color data as an array of 8-bit ints,
+ * where each element in the array is the value of an R, G, B, or A
+ * channel for a pixel's color
+ */
 export function getDisplayPixelsArray(): Uint8ClampedArray {
   const { gl, width, height } = pixiApp.renderer as PIXI.Renderer;
 
@@ -92,4 +78,36 @@ export function getDisplayPixelsArray(): Uint8ClampedArray {
   gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
   return pixels;
+}
+
+let throttledResizeTexturesAnimationFrameId;
+
+export function resizeRenderer(newWidth, newHeight) {
+  // Resize the renderer immediately
+  pixiApp.renderer.resize(newWidth, newHeight);
+
+  // Throttle resizing the textures by cancelling any previous pending resize attempts so we can
+  // reduce performance issues/flashes
+  cancelAnimationFrame(throttledResizeTexturesAnimationFrameId);
+
+  throttledResizeTexturesAnimationFrameId = requestAnimationFrame(() => {
+    // Resize the render target texture and render so we can transfer the display texture's
+    // current pixels without stretching anything
+    getRenderTargetTexture().resize(newWidth, newHeight);
+    render();
+
+    // Resize the other texture now that we're done with it
+    // (it will now be the "render target" since render()
+    // swaps the display and render textures when it's done)
+    getRenderTargetTexture().resize(newWidth, newHeight);
+
+    // Update the shader uniforms' pixel size
+    const pixelWidth = 1 / newWidth;
+    const pixelHeight = 1 / newHeight;
+
+    paintShader.uniforms.pixelWidth = pixelWidth;
+    paintShader.uniforms.pixelHeight = pixelHeight;
+    dissolveShader.uniforms.pixelWidth = pixelWidth;
+    dissolveShader.uniforms.pixelHeight = pixelHeight;
+  });
 }

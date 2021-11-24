@@ -21,14 +21,4 @@ const dissolveShader = new PIXI.Filter(
   defaultDissolveShaderUniformValues
 );
 
-window.addEventListener(
-  "resize",
-  () => {
-    // Update the shader uniform's pixel size when the window resizes
-    dissolveShader.uniforms.pixelWidth = 1 / window.innerWidth;
-    dissolveShader.uniforms.pixelHeight = 1 / window.innerHeight;
-  },
-  { passive: true }
-);
-
 export default dissolveShader;
