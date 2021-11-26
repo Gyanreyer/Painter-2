@@ -6,6 +6,8 @@ import {
 import { getColorChannelValue } from "./utils/colors";
 import drawPixels from "./drawPixels";
 import { resizeRenderer } from "./render";
+import pixiApp from "./pixiApp";
+import { getPointerEventPositionRelativeToTarget } from "./utils/pointer";
 
 export default function startInputManager() {
   window.addEventListener("keydown", (event) => {
@@ -63,7 +65,7 @@ export default function startInputManager() {
     }
   });
 
-  window.addEventListener("pointerdown", (event) => {
+  pixiApp.view.addEventListener("pointerdown", (event) => {
     const currentPlaybackState = getPlaybackState();
 
     switch (currentPlaybackState) {
@@ -80,8 +82,11 @@ export default function startInputManager() {
       // Don't do anything if the playback state is already forward or paused
     }
 
-    let previousPointerX = Math.round(event.x);
-    let previousPointerY = Math.round(event.y);
+    const relativePointerPosition =
+      getPointerEventPositionRelativeToTarget(event);
+
+    let previousPointerX = Math.round(relativePointerPosition.x);
+    let previousPointerY = Math.round(relativePointerPosition.y);
 
     // Set an initial color to draw onto the canvas at this pointer's position
     const pointerColor = new Uint8Array([
@@ -99,8 +104,11 @@ export default function startInputManager() {
     ]);
 
     function onPointerMove(event) {
-      const newPointerX = Math.round(event.x);
-      const newPointerY = Math.round(event.y);
+      const relativePointerPosition =
+        getPointerEventPositionRelativeToTarget(event);
+
+      const newPointerX = Math.round(relativePointerPosition.x);
+      const newPointerY = Math.round(relativePointerPosition.y);
 
       const pointerXChange = newPointerX - previousPointerX;
       const pointerYChange = newPointerY - previousPointerY;
@@ -154,14 +162,14 @@ export default function startInputManager() {
       previousPointerY = newPointerY;
     }
 
-    window.addEventListener("pointermove", onPointerMove);
+    pixiApp.view.addEventListener("pointermove", onPointerMove);
 
     function onPointerUp() {
       // Disable event listeners when the user lifts their mouse
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", onPointerUp);
+      pixiApp.view.removeEventListener("pointermove", onPointerMove);
+      pixiApp.view.removeEventListener("pointerup", onPointerUp);
     }
-    window.addEventListener("pointerup", onPointerUp);
+    pixiApp.view.addEventListener("pointerup", onPointerUp);
   });
 
   window.addEventListener(
