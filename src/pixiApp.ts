@@ -14,6 +14,4 @@ const pixiApp = new PIXI.Application({
 // Enable setting z-indices on sprites in our stage
 pixiApp.stage.sortableChildren = true;
 
-document.body.appendChild(pixiApp.view);
-
 export default pixiApp;
