@@ -2,6 +2,7 @@ import {
   updatePlaybackState,
   getPlaybackState,
   PLAYBACK_STATES,
+  addPlaybackStateChangeListener,
 } from "./playbackState";
 import { getColorChannelValue } from "./utils/colors";
 import drawPixels from "./drawPixels";
@@ -9,7 +10,42 @@ import { resizeRenderer } from "./render";
 import pixiApp from "./pixiApp";
 import { getPointerEventPositionRelativeToTarget } from "./utils/pointer";
 
+function togglePlayPausePlaybackState(currentPlaybackState: PLAYBACK_STATES) {
+  switch (currentPlaybackState) {
+    case PLAYBACK_STATES.FORWARD:
+      updatePlaybackState(PLAYBACK_STATES.FORWARD_PAUSED);
+      break;
+    case PLAYBACK_STATES.FORWARD_PAUSED:
+      updatePlaybackState(PLAYBACK_STATES.FORWARD);
+      break;
+    case PLAYBACK_STATES.REVERSE:
+      updatePlaybackState(PLAYBACK_STATES.REVERSE_PAUSED);
+      break;
+    case PLAYBACK_STATES.REVERSE_PAUSED:
+      updatePlaybackState(PLAYBACK_STATES.REVERSE);
+      break;
+    default:
+    // Don't do anything if the canvas is empty or playback is done
+  }
+}
+
 export default function startInputManager() {
+  const playPauseButton = document.getElementById("play-pause-button");
+  playPauseButton.addEventListener("click", () =>
+    togglePlayPausePlaybackState(getPlaybackState())
+  );
+
+  addPlaybackStateChangeListener((newPlaybackState) => {
+    switch (newPlaybackState) {
+      case PLAYBACK_STATES.FORWARD:
+      case PLAYBACK_STATES.REVERSE:
+        playPauseButton.dataset.playbackstate = "playing";
+        break;
+      default:
+        playPauseButton.dataset.playbackstate = "paused";
+    }
+  });
+
   window.addEventListener("keydown", (event) => {
     const currentPlaybackState = getPlaybackState();
 
@@ -44,22 +80,7 @@ export default function startInputManager() {
       // Space bar toggles playback into a paused/unpaused state
       case " ":
       case "Space":
-        switch (currentPlaybackState) {
-          case PLAYBACK_STATES.FORWARD:
-            updatePlaybackState(PLAYBACK_STATES.FORWARD_PAUSED);
-            break;
-          case PLAYBACK_STATES.FORWARD_PAUSED:
-            updatePlaybackState(PLAYBACK_STATES.FORWARD);
-            break;
-          case PLAYBACK_STATES.REVERSE:
-            updatePlaybackState(PLAYBACK_STATES.REVERSE_PAUSED);
-            break;
-          case PLAYBACK_STATES.REVERSE_PAUSED:
-            updatePlaybackState(PLAYBACK_STATES.REVERSE);
-            break;
-          default:
-          // Don't do anything if the canvas is empty or playback is done
-        }
+        togglePlayPausePlaybackState(currentPlaybackState);
 
       default:
     }

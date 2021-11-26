@@ -15,14 +15,17 @@ export enum PLAYBACK_STATES {
 
 let playbackState: PLAYBACK_STATES = PLAYBACK_STATES.EMPTY;
 
-const playbackStateChangeListeners: Set<
-  (
-    newPlaybackState: PLAYBACK_STATES,
-    previousPlaybackState: PLAYBACK_STATES
-  ) => void
-> = new Set();
+type PlaybackStateChangeListener = (
+  newPlaybackState: PLAYBACK_STATES,
+  previousPlaybackState: PLAYBACK_STATES
+) => void;
 
-export function addPlaybackStateChangeListener(listener) {
+const playbackStateChangeListeners: Set<PlaybackStateChangeListener> =
+  new Set();
+
+export function addPlaybackStateChangeListener(
+  listener: PlaybackStateChangeListener
+) {
   playbackStateChangeListeners.add(listener);
 
   return () => playbackStateChangeListeners.delete(listener);
