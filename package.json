@@ -2,6 +2,7 @@
   "name": "painter_2",
   "version": "1.0.0",
   "description": "A remake of my old Painter project using PixiJS.",
+  "homepage": "https://gyanreyer.github.io/Painter-2/",
   "scripts": {
     "build": "webpack --mode production",
     "develop": "webpack --watch --mode development",
