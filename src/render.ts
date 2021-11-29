@@ -5,6 +5,7 @@ import paintShader from "./shaders/paintShader";
 import dissolveShader from "./shaders/dissolveShader";
 import {
   addPlaybackStateChangeListener,
+  getPlaybackState,
   PLAYBACK_STATES,
 } from "./playbackState";
 
@@ -65,21 +66,6 @@ export default function render() {
   dissolveShader.uniforms.randSeed = newRandSeed;
 }
 
-/**
- * Extracts the canvas' pixel color data as an array of 8-bit ints,
- * where each element in the array is the value of an R, G, B, or A
- * channel for a pixel's color
- */
-export function getDisplayPixelsArray(): Uint8ClampedArray {
-  const { gl, width, height } = pixiApp.renderer as PIXI.Renderer;
-
-  const pixels = new Uint8ClampedArray(4 * width * height);
-
-  gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-
-  return pixels;
-}
-
 let throttledResizeTexturesAnimationFrameId;
 
 export function resizeRenderer(newWidth, newHeight) {
@@ -110,4 +96,39 @@ export function resizeRenderer(newWidth, newHeight) {
     dissolveShader.uniforms.pixelWidth = pixelWidth;
     dissolveShader.uniforms.pixelHeight = pixelHeight;
   });
+}
+
+/**
+ * Extracts the canvas' pixel color data as an array of 8-bit ints,
+ * where each element in the array is the value of an R, G, B, or A
+ * channel for a pixel's color
+ */
+export function getDisplayPixelsArray(): Uint8ClampedArray {
+  const { gl, width, height } = pixiApp.renderer as PIXI.Renderer;
+
+  const pixels = new Uint8ClampedArray(4 * width * height);
+
+  gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+  return pixels;
+}
+
+/**
+ * Downloads the canvas as an image file
+ */
+export function downloadCanvasImage() {
+  const currentPlaybackState = getPlaybackState();
+
+  if (currentPlaybackState === PLAYBACK_STATES.EMPTY) return;
+
+  // Make a temporary download link element and click it to download the image file
+  const link = document.createElement("a");
+  link.download = `Painter - ${new Date().toUTCString()}`;
+  link.href = pixiApp.view.toDataURL(
+    currentPlaybackState === PLAYBACK_STATES.DONE ? "image/jpeg" : "image/png",
+    0.9
+  );
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }

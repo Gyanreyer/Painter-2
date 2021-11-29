@@ -27,8 +27,6 @@ const dissolveCompletionChecker = Comlink.wrap<DissolveCompletionChecker>(
 // painted/dissolved and if so, update playback state
 export default function startCompletionChecker() {
   addPlaybackStateChangeListener((playbackState: PLAYBACK_STATES) => {
-    console.log(playbackState);
-
     if (
       playbackState !== PLAYBACK_STATES.FORWARD &&
       playbackState !== PLAYBACK_STATES.REVERSE

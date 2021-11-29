@@ -6,11 +6,13 @@ import {
 } from "./playbackState";
 import { getColorChannelValue } from "./utils/colors";
 import drawPixels from "./drawPixels";
-import { resizeRenderer } from "./render";
+import { resizeRenderer, downloadCanvasImage } from "./render";
 import pixiApp from "./pixiApp";
 import { getPointerEventPositionRelativeToTarget } from "./utils/pointer";
 
-function togglePlayPausePlaybackState(currentPlaybackState: PLAYBACK_STATES) {
+function togglePlayPausePlaybackState() {
+  const currentPlaybackState = getPlaybackState();
+
   switch (currentPlaybackState) {
     case PLAYBACK_STATES.FORWARD:
       updatePlaybackState(PLAYBACK_STATES.FORWARD_PAUSED);
@@ -29,58 +31,86 @@ function togglePlayPausePlaybackState(currentPlaybackState: PLAYBACK_STATES) {
   }
 }
 
+function togglePlaybackDirection() {
+  const currentPlaybackState = getPlaybackState();
+
+  switch (currentPlaybackState) {
+    case PLAYBACK_STATES.FORWARD:
+    case PLAYBACK_STATES.DONE:
+      updatePlaybackState(PLAYBACK_STATES.REVERSE);
+      break;
+    case PLAYBACK_STATES.FORWARD_PAUSED:
+      updatePlaybackState(PLAYBACK_STATES.REVERSE_PAUSED);
+      break;
+    case PLAYBACK_STATES.REVERSE:
+      updatePlaybackState(PLAYBACK_STATES.FORWARD);
+      break;
+    case PLAYBACK_STATES.REVERSE_PAUSED:
+      updatePlaybackState(PLAYBACK_STATES.FORWARD_PAUSED);
+      break;
+    default:
+    // Don't do anything if the canvas is empty or playback is done
+  }
+}
+
 export default function startInputManager() {
   const playPauseButton = document.getElementById("play-pause-button");
   playPauseButton.addEventListener("click", () =>
-    togglePlayPausePlaybackState(getPlaybackState())
+    togglePlayPausePlaybackState()
   );
 
+  const playbackDirectionButton = document.getElementById(
+    "playback-direction-button"
+  );
+  playbackDirectionButton.addEventListener("click", () =>
+    togglePlaybackDirection()
+  );
+
+  const downloadButton = document.getElementById("download-button");
+  downloadButton.addEventListener("click", () => downloadCanvasImage());
+
+  document.documentElement.dataset.playbackstate = getPlaybackState();
   addPlaybackStateChangeListener((newPlaybackState) => {
+    document.documentElement.dataset.playbackstate = newPlaybackState;
+  });
+
+  addPlaybackStateChangeListener((newPlaybackState) => {
+    playbackDirectionButton;
     switch (newPlaybackState) {
       case PLAYBACK_STATES.FORWARD:
+      case PLAYBACK_STATES.FORWARD_PAUSED:
+      case PLAYBACK_STATES.EMPTY:
+        playPauseButton.dataset.playbackdirection = "forward";
       case PLAYBACK_STATES.REVERSE:
-        playPauseButton.dataset.playbackstate = "playing";
+      case PLAYBACK_STATES.REVERSE_PAUSED:
+      case PLAYBACK_STATES.EMPTY:
+        playPauseButton.dataset.playbackdirection = "reverse";
         break;
-      default:
-        playPauseButton.dataset.playbackstate = "paused";
     }
   });
 
   window.addEventListener("keydown", (event) => {
-    const currentPlaybackState = getPlaybackState();
-
     const keyCode = event.key?.toLowerCase() || event.code;
 
     switch (keyCode) {
-      // The "R" key switches playback state to reverse
-      case "r":
-      case "KeyR":
-        switch (currentPlaybackState) {
-          case PLAYBACK_STATES.FORWARD:
-          case PLAYBACK_STATES.FORWARD_PAUSED:
-          case PLAYBACK_STATES.DONE:
-            updatePlaybackState(PLAYBACK_STATES.REVERSE);
-            break;
-          default:
-        }
-
+      // "D" key togggles playback direction
+      case "d":
+      case "KeyD":
+        togglePlaybackDirection();
         break;
-      // The "F" key switches playback state to forward if it's currently going in reverse
-      case "f":
-      case "KeyF":
-        switch (currentPlaybackState) {
-          case PLAYBACK_STATES.REVERSE:
-          case PLAYBACK_STATES.REVERSE_PAUSED:
-            updatePlaybackState(PLAYBACK_STATES.FORWARD);
-            break;
-          default:
-        }
-
+      // "P" key toggles playback into a paused/unpaused state
+      case "p":
+      case "KeyP":
+        togglePlayPausePlaybackState();
         break;
-      // Space bar toggles playback into a paused/unpaused state
-      case " ":
-      case "Space":
-        togglePlayPausePlaybackState(currentPlaybackState);
+
+      case "s":
+      case "KeyS":
+        if (event.ctrlKey || event.metaKey) {
+          event.preventDefault();
+          downloadCanvasImage();
+        }
+        break;
 
       default:
     }
@@ -206,4 +236,16 @@ export default function startInputManager() {
     },
     { passive: true }
   );
+
+  let mouseActivityTimeoutId;
+
+  window.addEventListener("mousemove", () => {
+    clearTimeout(mouseActivityTimeoutId);
+
+    document.documentElement.dataset.ismouseactive = "true";
+
+    mouseActivityTimeoutId = setTimeout(() => {
+      document.documentElement.dataset.ismouseactive = "false";
+    }, 4000);
+  });
 }
