@@ -1,5 +1,6 @@
 const path = require("path");
 const HTMLWebpackPlugin = require("html-webpack-plugin");
+const { VueLoaderPlugin } = require("vue-loader");
 
 module.exports = {
   entry: ["./src/index.ts"],
@@ -45,6 +46,14 @@ module.exports = {
           "sass-loader",
         ],
       },
+      // {
+      //   test: /\.css$/,
+      //   use: ["style-loader", "css-loader"],
+      // },
+      {
+        test: /\.vue$/,
+        loader: "vue-loader",
+      },
       {
         test: /\.glsl$/,
         use: ["raw-loader", "glslify-loader"],
@@ -52,6 +61,7 @@ module.exports = {
     ],
   },
   plugins: [
+    new VueLoaderPlugin(),
     new HTMLWebpackPlugin({
       template: "./src/index.html",
       minify: {

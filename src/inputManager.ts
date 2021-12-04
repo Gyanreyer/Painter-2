@@ -3,6 +3,8 @@ import {
   getPlaybackState,
   PLAYBACK_STATES,
   addPlaybackStateChangeListener,
+  togglePlayPausePlaybackState,
+  togglePlaybackDirection,
 } from "./playbackState";
 import { getColorChannelValue } from "./utils/colors";
 import drawPixels from "./drawPixels";
@@ -10,85 +12,7 @@ import { resizeRenderer, downloadCanvasImage } from "./render";
 import pixiApp from "./pixiApp";
 import { getPointerEventPositionRelativeToTarget } from "./utils/pointer";
 
-function togglePlayPausePlaybackState() {
-  const currentPlaybackState = getPlaybackState();
-
-  switch (currentPlaybackState) {
-    case PLAYBACK_STATES.FORWARD:
-      updatePlaybackState(PLAYBACK_STATES.FORWARD_PAUSED);
-      break;
-    case PLAYBACK_STATES.FORWARD_PAUSED:
-      updatePlaybackState(PLAYBACK_STATES.FORWARD);
-      break;
-    case PLAYBACK_STATES.REVERSE:
-      updatePlaybackState(PLAYBACK_STATES.REVERSE_PAUSED);
-      break;
-    case PLAYBACK_STATES.REVERSE_PAUSED:
-      updatePlaybackState(PLAYBACK_STATES.REVERSE);
-      break;
-    default:
-    // Don't do anything if the canvas is empty or playback is done
-  }
-}
-
-function togglePlaybackDirection() {
-  const currentPlaybackState = getPlaybackState();
-
-  switch (currentPlaybackState) {
-    case PLAYBACK_STATES.FORWARD:
-    case PLAYBACK_STATES.DONE:
-      updatePlaybackState(PLAYBACK_STATES.REVERSE);
-      break;
-    case PLAYBACK_STATES.FORWARD_PAUSED:
-      updatePlaybackState(PLAYBACK_STATES.REVERSE_PAUSED);
-      break;
-    case PLAYBACK_STATES.REVERSE:
-      updatePlaybackState(PLAYBACK_STATES.FORWARD);
-      break;
-    case PLAYBACK_STATES.REVERSE_PAUSED:
-      updatePlaybackState(PLAYBACK_STATES.FORWARD_PAUSED);
-      break;
-    default:
-    // Don't do anything if the canvas is empty or playback is done
-  }
-}
-
 export default function startInputManager() {
-  const playPauseButton = document.getElementById("play-pause-button");
-  playPauseButton.addEventListener("click", () =>
-    togglePlayPausePlaybackState()
-  );
-
-  const playbackDirectionButton = document.getElementById(
-    "playback-direction-button"
-  );
-  playbackDirectionButton.addEventListener("click", () =>
-    togglePlaybackDirection()
-  );
-
-  const downloadButton = document.getElementById("download-button");
-  downloadButton.addEventListener("click", () => downloadCanvasImage());
-
-  document.documentElement.dataset.playbackstate = getPlaybackState();
-  addPlaybackStateChangeListener((newPlaybackState) => {
-    document.documentElement.dataset.playbackstate = newPlaybackState;
-  });
-
-  addPlaybackStateChangeListener((newPlaybackState) => {
-    playbackDirectionButton;
-    switch (newPlaybackState) {
-      case PLAYBACK_STATES.FORWARD:
-      case PLAYBACK_STATES.FORWARD_PAUSED:
-      case PLAYBACK_STATES.EMPTY:
-        playPauseButton.dataset.playbackdirection = "forward";
-      case PLAYBACK_STATES.REVERSE:
-      case PLAYBACK_STATES.REVERSE_PAUSED:
-      case PLAYBACK_STATES.EMPTY:
-        playPauseButton.dataset.playbackdirection = "reverse";
-        break;
-    }
-  });
-
   window.addEventListener("keydown", (event) => {
     const keyCode = event.key?.toLowerCase() || event.code;
 
@@ -236,16 +160,4 @@ export default function startInputManager() {
     },
     { passive: true }
   );
-
-  let mouseActivityTimeoutId;
-
-  window.addEventListener("mousemove", () => {
-    clearTimeout(mouseActivityTimeoutId);
-
-    document.documentElement.dataset.ismouseactive = "true";
-
-    mouseActivityTimeoutId = setTimeout(() => {
-      document.documentElement.dataset.ismouseactive = "false";
-    }, 4000);
-  });
 }
