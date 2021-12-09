@@ -4,12 +4,10 @@ import render from "./render";
 
 export default function startUpdateLoop() {
   // Add the pixi canvas to the DOM
-  document.getElementById("pixi-root").appendChild(pixiApp.view);
+  document.body.appendChild(pixiApp.view);
 
-  let renderPassesPerLoop = 4;
+  let renderPassesPerLoop = 1;
   let renderPassCount = 0;
-
-  // const renderSpeed = 1;
 
   (function update() {
     const currentPlaybackState = getPlaybackState();
@@ -28,14 +26,4 @@ export default function startUpdateLoop() {
 
     requestAnimationFrame(update);
   })();
-
-  // pixiApp.ticker.add(() => {
-
-  //   if (
-  //     currentPlaybackState === PLAYBACK_STATES.FORWARD ||
-  //     currentPlaybackState === PLAYBACK_STATES.REVERSE
-  //   ) {
-  //     render();
-  //   }
-  // });
 }

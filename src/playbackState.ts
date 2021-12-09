@@ -24,8 +24,13 @@ const playbackStateChangeListeners: Set<PlaybackStateChangeListener> =
   new Set();
 
 export function addPlaybackStateChangeListener(
-  listener: PlaybackStateChangeListener
+  listener: PlaybackStateChangeListener,
+  shouldInvokeImmediately: boolean = false
 ) {
+  if (shouldInvokeImmediately) {
+    listener(playbackState, playbackState);
+  }
+
   playbackStateChangeListeners.add(listener);
 
   return () => playbackStateChangeListeners.delete(listener);
@@ -86,5 +91,27 @@ export function togglePlaybackDirection() {
       break;
     default:
     // Don't do anything if the canvas is empty or playback is done
+  }
+}
+
+export enum PLAYBACK_DIRECTIONS {
+  FORWARD = "FORWARD",
+  REVERSE = "REVERSE",
+  NONE = "NONE",
+}
+
+export function getPlaybackDirectionFromPlaybackState(
+  playbackState: PLAYBACK_STATES
+) {
+  switch (playbackState) {
+    case PLAYBACK_STATES.FORWARD:
+    case PLAYBACK_STATES.FORWARD_PAUSED:
+    case PLAYBACK_STATES.DONE:
+      return PLAYBACK_DIRECTIONS.FORWARD;
+    case PLAYBACK_STATES.REVERSE:
+    case PLAYBACK_STATES.REVERSE_PAUSED:
+      return PLAYBACK_DIRECTIONS.REVERSE;
+    case PLAYBACK_STATES.EMPTY:
+      return PLAYBACK_DIRECTIONS.NONE;
   }
 }

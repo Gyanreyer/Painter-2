@@ -1,6 +1,8 @@
 const path = require("path");
 const HTMLWebpackPlugin = require("html-webpack-plugin");
-const { VueLoaderPlugin } = require("vue-loader");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+
+const isProduction = process.env.NODE_ENV === "production";
 
 module.exports = {
   entry: ["./src/index.ts"],
@@ -9,7 +11,10 @@ module.exports = {
     path: path.resolve(__dirname, "dist"),
   },
   resolve: {
-    extensions: [".ts", ".js", ".json"],
+    alias: {
+      svelte: path.resolve("node_modules", "svelte"),
+    },
+    extensions: [".ts", ".js", ".json", ".svelte"],
   },
   devServer: {
     static: {
@@ -17,9 +22,35 @@ module.exports = {
     },
     compress: true,
     port: 9000,
+    hot: true,
   },
   module: {
     rules: [
+      {
+        test: /\.svelte$/,
+        use: {
+          loader: "svelte-loader",
+          options: {
+            emitCss: true,
+            compilerOptions: {
+              dev: !isProduction,
+            },
+            hotReload: !isProduction,
+            preprocess: require("svelte-preprocess")({
+              postcss: {
+                plugins: [require("autoprefixer")({ grid: true })],
+              },
+            }),
+          },
+        },
+      },
+      {
+        // required to prevent errors from Svelte on Webpack 5+, omit on Webpack 4
+        test: /node_modules\/svelte\/.*\.mjs$/,
+        resolve: {
+          fullySpecified: false,
+        },
+      },
       {
         test: /\.ts$/,
         exclude: /node_modules/,
@@ -46,14 +77,22 @@ module.exports = {
           "sass-loader",
         ],
       },
-      // {
-      //   test: /\.css$/,
-      //   use: ["style-loader", "css-loader"],
-      // },
       {
-        test: /\.vue$/,
-        loader: "vue-loader",
+        test: /\.css$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          {
+            loader: "css-loader",
+            options: {
+              sourceMap: true,
+            },
+          },
+        ],
       },
+      // {
+      //   test: /\.vue$/,
+      //   loader: "vue-loader",
+      // },
       {
         test: /\.glsl$/,
         use: ["raw-loader", "glslify-loader"],
@@ -61,7 +100,6 @@ module.exports = {
     ],
   },
   plugins: [
-    new VueLoaderPlugin(),
     new HTMLWebpackPlugin({
       template: "./src/index.html",
       minify: {
@@ -73,5 +111,6 @@ module.exports = {
         useShortDoctype: true,
       },
     }),
+    new MiniCssExtractPlugin({ filename: "styles.css" }),
   ],
 };
