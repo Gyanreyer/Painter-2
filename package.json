@@ -4,7 +4,7 @@
   "description": "A remake of my old Painter project using PixiJS.",
   "homepage": "https://gyanreyer.github.io/Painter-2/",
   "scripts": {
-    "build": "webpack --mode production",
+    "build": "NODE_ENV=production webpack --mode production",
     "develop": "webpack --watch --mode development",
     "develop-live": "webpack-dev-server --mode development"
   },
@@ -21,7 +21,8 @@
   "dependencies": {
     "comlink": "^4.3.1",
     "pixi.js": "^6.2.0",
-    "svelte": "^3.44.2"
+    "svelte": "^3.44.2",
+    "tinycolor2": "^1.4.2"
   },
   "devDependencies": {
     "@swc/core": "^1.2.108",

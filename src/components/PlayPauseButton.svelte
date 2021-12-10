@@ -5,6 +5,9 @@
     togglePlayPausePlaybackState,
   } from "../playbackState";
   import ControlButton from "./ControlButton.svelte";
+  import { BUTTON_THEMES } from "./types";
+
+  export let theme: BUTTON_THEMES;
 
   let isPlaying;
   let isHidden;
@@ -28,7 +31,12 @@
       height="24"
       viewBox="0 0 24 24"
     >
-      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" class="icon-path" />
+      <path
+        d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"
+        class="icon-path"
+        class:light={theme === BUTTON_THEMES.light}
+        class:dark={theme === BUTTON_THEMES.dark}
+      />
       <path d="M0 0h24v24H0z" fill="none" />
       <title>Pause (P)</title>
     </svg>
@@ -39,7 +47,12 @@
       height="24"
       viewBox="0 0 24 24"
     >
-      <path d="M8 5v14l11-7z" class="icon-path" />
+      <path
+        d="M8 5v14l11-7z"
+        class="icon-path"
+        class:light={theme === BUTTON_THEMES.light}
+        class:dark={theme === BUTTON_THEMES.dark}
+      />
       <path d="M0 0h24v24H0z" fill="none" />
       <title>Play (P)</title>
     </svg>
@@ -52,7 +65,14 @@
     height: auto;
 
     .icon-path {
-      fill: black;
+      transition: fill 0.4s;
+
+      &.dark {
+        fill: black;
+      }
+      &.light {
+        fill: white;
+      }
     }
   }
 </style>

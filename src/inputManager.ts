@@ -10,7 +10,6 @@ import { getColorChannelValue } from "./utils/colors";
 import drawPixels from "./drawPixels";
 import { resizeRenderer, downloadCanvasImage } from "./render";
 import pixiApp from "./pixiApp";
-import { getPointerEventPositionRelativeToTarget } from "./utils/pointer";
 
 export default function startInputManager() {
   window.addEventListener("keydown", (event) => {
@@ -57,11 +56,8 @@ export default function startInputManager() {
       // Don't do anything if the playback state is already forward or paused
     }
 
-    const relativePointerPosition =
-      getPointerEventPositionRelativeToTarget(event);
-
-    let previousPointerX = Math.round(relativePointerPosition.x);
-    let previousPointerY = Math.round(relativePointerPosition.y);
+    let previousPointerX = Math.round(event.clientX);
+    let previousPointerY = Math.round(event.clientY);
 
     // Set an initial color to draw onto the canvas at this pointer's position
     const pointerColor = new Uint8Array([
@@ -79,11 +75,8 @@ export default function startInputManager() {
     ]);
 
     function onPointerMove(event) {
-      const relativePointerPosition =
-        getPointerEventPositionRelativeToTarget(event);
-
-      const newPointerX = Math.round(relativePointerPosition.x);
-      const newPointerY = Math.round(relativePointerPosition.y);
+      const newPointerX = Math.round(event.clientX);
+      const newPointerY = Math.round(event.clientY);
 
       const pointerXChange = newPointerX - previousPointerX;
       const pointerYChange = newPointerY - previousPointerY;
@@ -137,14 +130,14 @@ export default function startInputManager() {
       previousPointerY = newPointerY;
     }
 
-    pixiApp.view.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointermove", onPointerMove);
 
     function onPointerUp() {
       // Disable event listeners when the user lifts their mouse
-      pixiApp.view.removeEventListener("pointermove", onPointerMove);
-      pixiApp.view.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
     }
-    pixiApp.view.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointerup", onPointerUp);
   });
 
   window.addEventListener(

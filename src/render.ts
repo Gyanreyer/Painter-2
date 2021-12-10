@@ -103,12 +103,17 @@ export function resizeRenderer(newWidth, newHeight) {
  * where each element in the array is the value of an R, G, B, or A
  * channel for a pixel's color
  */
-export function getDisplayPixelsArray(): Uint8ClampedArray {
-  const { gl, width, height } = pixiApp.renderer as PIXI.Renderer;
+export function getDisplayPixelsArray(
+  x = 0,
+  y = 0,
+  width = pixiApp.renderer.width,
+  height = pixiApp.renderer.height
+): Uint8ClampedArray {
+  const { gl } = pixiApp.renderer as PIXI.Renderer;
 
   const pixels = new Uint8ClampedArray(4 * width * height);
 
-  gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+  gl.readPixels(x, y, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
   return pixels;
 }
