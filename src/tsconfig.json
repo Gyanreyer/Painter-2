@@ -10,6 +10,10 @@
         "./node_modules/resource-loader/typings/mini-signals.d.ts"
       ]
     },
+    "types": [
+      "node",
+      "svelte"
+    ],
     "allowSyntheticDefaultImports": true,
   }
 }

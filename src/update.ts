@@ -6,14 +6,24 @@ export default function startUpdateLoop() {
   // Add the pixi canvas to the DOM
   document.body.appendChild(pixiApp.view);
 
-  pixiApp.ticker.add(() => {
+  let renderPassesPerLoop = 1;
+  let renderPassCount = 0;
+
+  (function update() {
     const currentPlaybackState = getPlaybackState();
 
     if (
       currentPlaybackState === PLAYBACK_STATES.FORWARD ||
       currentPlaybackState === PLAYBACK_STATES.REVERSE
     ) {
-      render();
+      renderPassCount += renderPassesPerLoop;
+
+      while (Math.floor(renderPassCount) > 0) {
+        render();
+        renderPassCount -= 1;
+      }
     }
-  });
+
+    requestAnimationFrame(update);
+  })();
 }
