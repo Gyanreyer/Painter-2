@@ -16,4 +16,6 @@ and can continue clicking to paint more empty pixels on the canvas while the sim
   
 ## Further planned features:
 - The ability to change playback speed
-  - The foundation for this are in place; just need to design a good way to control it in the UI
+  - The foundation for this is in place; just need to design a good way to control it in the UI
+- Mobile/touch-friendly controls
+- Keyboard accessibility mode (when enabled, the user can move their cursor around with the arrow keys and paint with space/enter)
