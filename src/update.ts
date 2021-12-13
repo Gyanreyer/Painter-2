@@ -4,7 +4,7 @@ import render from "./render";
 
 export default function startUpdateLoop() {
   // Add the pixi canvas to the DOM
-  document.body.appendChild(pixiApp.view);
+  document.getElementById("pixi-root").appendChild(pixiApp.view);
 
   let renderPassesPerLoop = 1;
   let renderPassCount = 0;

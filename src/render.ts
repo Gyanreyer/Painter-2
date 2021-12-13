@@ -102,6 +102,11 @@ export function resizeRenderer(newWidth, newHeight) {
  * Extracts the canvas' pixel color data as an array of 8-bit ints,
  * where each element in the array is the value of an R, G, B, or A
  * channel for a pixel's color
+ *
+ * @param {number}  [x=0]   The x position of the left edge of the rectangle of pixels we want to extract from the canvas
+ * @param {number}  [y=0]   The y position of the top edge of the rectangle of pixels we want to extract from the canvas
+ * @param {number}  [width]   The width of the rectangle of pixels we want to extract from the canvas; if not provided, will default to the full width of the canvas
+ * @param {number}  [height]  The height of the rectangle of pixels we want to extract from the canvas; if not provided, will default to the full height of the canvas
  */
 export function getDisplayPixelsArray(
   x = 0,
@@ -112,7 +117,6 @@ export function getDisplayPixelsArray(
   const { gl } = pixiApp.renderer as PIXI.Renderer;
 
   const pixels = new Uint8ClampedArray(4 * width * height);
-
   gl.readPixels(x, y, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
 
   return pixels;
@@ -124,15 +128,13 @@ export function getDisplayPixelsArray(
 export function downloadCanvasImage() {
   const currentPlaybackState = getPlaybackState();
 
+  // If the canvas is empty, don't do anything because there's no point in saving a blank image
   if (currentPlaybackState === PLAYBACK_STATES.EMPTY) return;
 
   // Make a temporary download link element and click it to download the image file
   const link = document.createElement("a");
   link.download = `Painter - ${new Date().toUTCString()}`;
-  link.href = pixiApp.view.toDataURL(
-    currentPlaybackState === PLAYBACK_STATES.DONE ? "image/jpeg" : "image/png",
-    0.9
-  );
+  link.href = pixiApp.view.toDataURL("image/jpeg", 0.9);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

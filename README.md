@@ -1,9 +1,11 @@
 # Painter v2
+
 A remake of [my original Painter project](https://github.com/Gyanreyer/Painter) with major user experience and performance improvements.
 
 ## Improvements over the previous implementation:
+
 - In Painter v1, the user could only click once on the canvas to paint a single pixel, and then the simulation would run from there, resetting if you click again. In v2, the user can now click + drag to paint multiple pixels in a single stroke,
-and can continue clicking to paint more empty pixels on the canvas while the simulation is running.
+  and can continue clicking to paint more empty pixels on the canvas while the simulation is running.
 - Adds a dissolve effect to clear any paint on the canvas; the user can switch directions between painting/dissolving at any time
 - UI improvements
   - Drops bootstrap in favor of [material icons](https://google.github.io/material-design-icons/) + custom CSS
@@ -13,9 +15,18 @@ and can continue clicking to paint more empty pixels on the canvas while the sim
 - In Painter v1, periodic checks for whether the simulation was complete or not were extremely expensive and the biggest source of performance degradation. This version makes an effort to move as much of that logic into web workers as possible so it won't block the main thread.
   - Using the [Comlink](https://github.com/GoogleChromeLabs/comlink) library for simpler worker management
 - Switched to TypeScript, because it's just great.
-  
-## Further planned features:
+
+## In-progress features
+
+- Keyboard accessibility
+  - Done:
+    - The user can tab to focus on the canvas and then use the arrow keys to move a cursor around and press space/enter to paint at that point
+  - TODO:
+    - Fix control buttons not being keyboard focusable when hidden
+    - Add better instructions to make it clear to the user what they should do/expose keyboard shortcuts
+
+## Further planned features
+
 - The ability to change playback speed
   - The foundation for this is in place; just need to design a good way to control it in the UI
 - Mobile/touch-friendly controls
-- Keyboard accessibility mode (when enabled, the user can move their cursor around with the arrow keys and paint with space/enter)

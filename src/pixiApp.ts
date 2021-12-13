@@ -8,6 +8,7 @@ PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 const pixiApp = new PIXI.Application({
   width: window.innerWidth,
   height: window.innerHeight,
+  backgroundColor: 0xffffff,
   backgroundAlpha: 0,
   preserveDrawingBuffer: true,
 });

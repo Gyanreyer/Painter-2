@@ -1,8 +1,9 @@
 <script lang="ts">
   import {
     PLAYBACK_STATES,
+    getPlaybackState,
+    updatePlaybackState,
     addPlaybackStateChangeListener,
-    togglePlayPausePlaybackState,
   } from "../playbackState";
   import ControlButton from "./ControlButton.svelte";
   import { BUTTON_THEMES } from "./types";
@@ -21,6 +22,38 @@
       playbackState === PLAYBACK_STATES.EMPTY ||
       playbackState === PLAYBACK_STATES.DONE;
   }, true);
+
+  function togglePlayPausePlaybackState() {
+    const currentPlaybackState = getPlaybackState();
+
+    switch (currentPlaybackState) {
+      case PLAYBACK_STATES.FORWARD:
+        updatePlaybackState(PLAYBACK_STATES.FORWARD_PAUSED);
+        break;
+      case PLAYBACK_STATES.FORWARD_PAUSED:
+        updatePlaybackState(PLAYBACK_STATES.FORWARD);
+        break;
+      case PLAYBACK_STATES.REVERSE:
+        updatePlaybackState(PLAYBACK_STATES.REVERSE_PAUSED);
+        break;
+      case PLAYBACK_STATES.REVERSE_PAUSED:
+        updatePlaybackState(PLAYBACK_STATES.REVERSE);
+        break;
+      default:
+      // Don't do anything if the canvas is empty or playback is done
+    }
+  }
+
+  // Add a keydown listener for the button's keyboard shortcut
+  window.addEventListener("keydown", (event) => {
+    // Ignore further events if the user is holding the same key down
+    if (event.repeat) return;
+
+    // If the user pressed the "P" key, toggle between a playing/paused state
+    if (event.key === "p" || event.key === "P" || event.code === "KeyP") {
+      togglePlayPausePlaybackState();
+    }
+  });
 </script>
 
 <ControlButton onClick={togglePlayPausePlaybackState} {isHidden}>

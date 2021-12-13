@@ -36,8 +36,6 @@
       clearInterval(sampleIntervalId);
 
       function samplePixelColorsAndUpdateButtonTheme() {
-        console.log("checking");
-
         let controlsClientRect = controlsElement.getBoundingClientRect();
 
         const sampleX =
@@ -80,8 +78,6 @@
           g: sampleColorSum[1] / PIXEL_SAMPLE_WIDTH,
           b: sampleColorSum[2] / PIXEL_SAMPLE_WIDTH,
         }).isDark();
-
-        console.log("is dark", isColorDark);
 
         buttonTheme = isColorDark ? BUTTON_THEMES.light : BUTTON_THEMES.dark;
 

@@ -16,6 +16,21 @@
   addPlaybackStateChangeListener((newPlaybackState) => {
     isHidden = newPlaybackState === PLAYBACK_STATES.EMPTY;
   });
+
+  // Add a keydown listener for the button's keyboard shortcut
+  window.addEventListener("keydown", (event) => {
+    // Ignore further events if the user is holding the same key down
+    if (event.repeat) return;
+
+    // If the user presses ctrl/cmd + "S", save the canvas as an image file
+    if (
+      (event.ctrlKey || event.metaKey) &&
+      (event.key === "s" || event.key === "S" || event.code === "KeyS")
+    ) {
+      event.preventDefault();
+      downloadCanvasImage();
+    }
+  });
 </script>
 
 <ControlButton {isHidden} onClick={downloadCanvasImage}>
