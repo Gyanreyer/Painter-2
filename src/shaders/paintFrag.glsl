@@ -56,6 +56,8 @@ void main() {
 
   vec2 randCoordSeed = vTextureCoord.xy * randSeed;
 
+  float halfColorVariability = colorVariability * 0.5;
+
   gl_FragColor = pixelColor +
     // Multiply everything by 0 if the pixel color's alpha is 1.0, meaning its color is already locked in
     // This allows us to avoid any branching!
@@ -68,9 +70,14 @@ void main() {
       (numberOfFilledPixels > 0.0 && rand(randCoordSeed) < fillProbability)
     ) * vec4(
       // Set the r, g, and b values by applying some random variation from the average r, g, and b values of the pixels surrounding this pixel
-      clamp(averageColor.r + (rand(randCoordSeed * averageColor.r) - 0.5) * colorVariability, 0.0, 1.0),
-      clamp(averageColor.g + (rand(randCoordSeed * averageColor.g) - 0.5) * colorVariability, 0.0, 1.0),
-      clamp(averageColor.b + (rand(randCoordSeed * averageColor.b) - 0.5) * colorVariability, 0.0, 1.0),
+      // Our methodology for applying variation is as follows:
+      //  1. Determine the lower bound of the range that we can shift the channel value by (ie, if r is 0.9 and colorVariability is 0.04, the range we can shift within is 0.88-0.92)
+      //  2. Clamping the lower bound to ensure we can't shift the value above or below the valid number range of 0-1 (if r is 0.99 and colorVariability is 0.04, the range should be 0.96-1.0)
+      //  3. Multiply colorVariability by a random number from 0-1 and add that to the lower bound to get our new shifted color channel value
+      clamp(averageColor.r - halfColorVariability, 0.0, 1.0 - colorVariability) + rand(randCoordSeed * averageColor.r) * colorVariability,
+      clamp(averageColor.g - halfColorVariability, 0.0, 1.0 - colorVariability) + rand(randCoordSeed * averageColor.g) * colorVariability,
+      clamp(averageColor.b - halfColorVariability, 0.0, 1.0 - colorVariability) + rand(randCoordSeed * averageColor.b) * colorVariability,
+      // All filled pixels should have an alpha of 1.0
       1.0
     );
 }

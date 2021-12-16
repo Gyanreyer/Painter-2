@@ -25,21 +25,29 @@ pixiApp.stage.addChild(userInputPixelDrawerSprite);
  * @param {number}  [blendVariability=4]  The size of the range of how far the new blended value can deviate from the original.
  *                                          For example, for a value of 100, a blend variability of 4 means our new blended value
  *                                          will be somewhere between 98 and 102
- * @returns
+ * @returns {number}  New color channel value
  */
 const getColorChannelValue = (
   blendChannelValue: number | null = null,
   blendVariability: number = 4
-): number =>
-  Math.round(
-    blendChannelValue
-      ? clamp(
-          blendChannelValue + (Math.random() - 0.5) * blendVariability,
-          0,
-          255
-        )
-      : Math.random() * 255
+): number => {
+  if (!blendChannelValue) {
+    return Math.round(Math.random() * 255);
+  }
+
+  // If we're blending from an existing color, let's calculate the lower bound of the range of new values
+  // that we can randomly blend within.
+  // We're clamping the lower bound to ensure we can't shift the value above or below the valid number range of 0-255
+  // (if the value is 254 and colorVariability is 4, the range should be 251-255,
+  //  if the value is 1, the range should be 0-4)
+  const blendedValueLowerBound = clamp(
+    blendChannelValue - blendVariability * 0.5,
+    0,
+    255 - blendVariability
   );
+
+  return Math.round(blendedValueLowerBound + Math.random() * blendVariability);
+};
 
 /**
  * Makes a new fresh color array with random RGB channel values
