@@ -138,16 +138,40 @@
     left: 12px;
 
     --controls-transition-duration: 0.1s;
+    --base-x-translation: 0;
+    --base-y-translation: 0;
+
+    pointer-events: none;
 
     opacity: 0;
-    transform: translateY(10%);
+    transform: translate(
+      var(--base-x-translation),
+      calc(10% + var(--base-y-translation))
+    );
     transition: opacity var(--controls-transition-duration),
       transform var(--controls-transition-duration);
 
     :global(html[data-controlsactive="true"]) &,
     &:focus-within {
+      pointer-events: all;
       opacity: 1;
-      transform: translateY(0);
+      transform: translate(
+        var(--base-x-translation),
+        var(--base-y-translation)
+      );
+    }
+
+    @media (pointer: coarse) {
+      width: 70vw;
+      max-width: 320px;
+      bottom: 50%;
+      left: 50%;
+
+      display: flex;
+      justify-content: space-between;
+
+      --base-x-translation: -50%;
+      --base-y-translation: 50%;
     }
   }
 </style>

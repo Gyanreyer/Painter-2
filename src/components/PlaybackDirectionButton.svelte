@@ -81,7 +81,7 @@
 
 <style lang="scss">
   svg {
-    width: 32px;
+    width: 100%;
     height: auto;
 
     transition: transform 0.2s;

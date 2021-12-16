@@ -14,7 +14,12 @@
     border: none;
     cursor: pointer;
 
-    max-width: 32px;
+    width: 32px;
+
+    @media (pointer: coarse) {
+      width: 25%;
+    }
+
     opacity: 1;
     transform: translateY(0);
     visibility: visible;
