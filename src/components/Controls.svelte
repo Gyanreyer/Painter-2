@@ -138,19 +138,14 @@
     left: 12px;
 
     --controls-transition-duration: 0.1s;
-    --controls-visibility-transition-delay: var(--controls-transition-duration);
 
-    visibility: hidden;
     opacity: 0;
     transform: translateY(10%);
     transition: opacity var(--controls-transition-duration),
-      transform var(--controls-transition-duration),
-      visibility 0s var(--controls-visibility-transition-delay);
+      transform var(--controls-transition-duration);
 
-    :global(html[data-controlsactive="true"]) & {
-      --controls-visibility-transition-delay: 0s;
-
-      visibility: visible;
+    :global(html[data-controlsactive="true"]) &,
+    &:focus-within {
       opacity: 1;
       transform: translateY(0);
     }
