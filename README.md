@@ -22,11 +22,8 @@ A remake of [my original Painter project](https://github.com/Gyanreyer/Painter) 
   - Done:
     - The user can tab to focus on the canvas and then use the arrow keys to move a cursor around and press space/enter to paint at that point
   - TODO:
-    - Fix control buttons not being keyboard focusable when hidden
     - Add better instructions to make it clear to the user what they should do/expose keyboard shortcuts
 
 ## Further planned features
 
-- The ability to change playback speed
-  - The foundation for this is in place; just need to design a good way to control it in the UI
 - Mobile/touch-friendly controls
